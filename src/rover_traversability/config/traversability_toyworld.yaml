@@ -1,0 +1,54 @@
+traversability_node:
+  ros__parameters:
+    use_sim_time: true
+
+    # --- I/O ---
+    input_cloud_topic: /points
+    output_costmap_topic: /traversability/costmap
+    map_frame: map
+
+    # --- grid geometry (must match the global_costmap in nav2_params.yaml) ---
+    resolution: 0.15
+    map_size_x: 60.0
+    map_size_y: 60.0
+    origin_x: -30.0
+    origin_y: -30.0
+
+    # --- cloud preprocessing / update rate ---
+    stride: 1
+    max_range: 20.0
+    update_period: 0.25
+
+    # --- temporal fusion ---
+    # 'max' still wins for a moving/revisiting robot in general, but repeated
+    # noisy revisits of the SAME ground cell (e.g. during Nav2 recovery spins)
+    # otherwise creep upward forever since max never comes back down. Gate a
+    # NEW observation that lands well above a cell's already-established
+    # estimate -- this is what was painting flat ground the same "lethal" as
+    # real box edges: false step/slope from self-inflicted height noise, not
+    # geometry. See conversation 2026-09-12 for the diagnosis.
+    fusion: max
+    ema_alpha: 0.2
+    outlier_gate: 0.04       # m; reject a new obs >4cm above an established cell
+    outlier_min_hits: 5      # start gating after this many observations
+
+    # --- derived layers ---
+    min_hits: 5              # was 3 -- a couple more scans before trusting a cell
+    smooth_iters: 0
+    publish_debug_layers: false
+    slope_method: planefit
+    slope_min_pts: 6         # was 4 -- fewer false-high slopes at the edge of
+                              # current lidar coverage (underdetermined plane fits)
+
+    # --- cost combination -- tuned for the toy world, NOT the real rover ---
+    # The rover is meant to climb slopes, so the 20 deg calibration ramp should
+    # read as barely-costly, not near-lethal. slope_lethal_deg here is a toy-world
+    # visualization choice, independent of rover_traversability/config/traversability.yaml's
+    # slope_lethal_deg (25 deg), which is the real climb-limit placeholder used
+    # by Mars Yard and is left untouched by this file.
+    slope_free_deg: 18.0     # <= this: no slope penalty (covers "gentle" ground noise)
+    slope_lethal_deg: 38.0   # >= this: cost 100 (well above the 20 deg ramp)
+    step_lethal_m: 0.15      # unchanged -- this is what makes box edges AND the
+                              # ramp's far-end drop-off (~1.09 m) read as lethal
+    rough_free: 0.03
+    rough_lethal: 0.12

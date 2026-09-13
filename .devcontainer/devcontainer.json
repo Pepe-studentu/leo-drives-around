@@ -1,0 +1,29 @@
+{
+  "name": "ROS 2 Jazzy Dev",
+  "image": "osrf/ros:jazzy-desktop-full",
+  "runArgs": [
+    "--network=host",
+    "--ipc=host",
+    "--privileged",
+    "--device", "/dev/dri:/dev/dri"
+  ],
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "QT_X11_NO_MITSHM": "1",
+    "XAUTHORITY": "/home/ws/.devcontainer/.container.Xauthority"
+  },
+  "mounts": [
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
+    "source=${localEnv:HOME}/.Xauthority,target=/home/ws/.devcontainer/.container.Xauthority,type=bind"
+  ],
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/ws,type=bind",
+  "workspaceFolder": "/home/ws",
+  "postCreateCommand": "apt-get update && apt-get install -y ros-jazzy-robot-localization && echo 'source /opt/ros/jazzy/setup.bash' >> ~/.bashrc",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ranch-hand-robotics.rde-pack"
+      ]
+    }
+  }
+}

@@ -1,0 +1,110 @@
+<?xml version="1.0" ?>
+<!--
+  Traversability calibration world. Known analytic geometry so calib_checker.py
+  can compare the live slope/step/height grids against ground truth.
+  World coords == map coords (launch pins map->base_footprint = identity, rover
+  spawned at the origin on FLAT ground).
+
+  Layout (rover at origin on flat ground, lidar -20..+3 deg):
+    GROUND      flat, top z = 0                       -- expect slope 0
+    RAMP20      ascending 20 deg, toe at x=1.5 z=0    -- expect slope 20 (constant)
+    BOX 0.15    1.0x1.0x0.15  at (0.0, -2.0)          -- expect edge step 0.15
+    BOX 0.30    1.0x1.0x0.30  at (0.0,  2.0)          -- expect edge step 0.30
+    BOX 0.45    1.0x1.0x0.45  at (-2.7, 0.0)          -- expect edge step 0.45
+-->
+<sdf version="1.8">
+  <world name="calibration">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+    <plugin filename="gz-sim-navsat-system" name="gz::sim::systems::NavSat"/>
+
+    <!-- Same origin as the other worlds' GPS datum, so a GPS-corrected EKF
+         keeps world coords == map coords instead of drifting on wheel slip. -->
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <world_frame_orientation>ENU</world_frame_orientation>
+      <latitude_deg>50.0614</latitude_deg>
+      <longitude_deg>19.9365</longitude_deg>
+      <elevation>220.0</elevation>
+      <heading_deg>0.0</heading_deg>
+    </spherical_coordinates>
+
+    <light name="sun" type="directional">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.4 0.2 -0.9</direction>
+    </light>
+
+    <!-- ================= GROUND: top surface at z = 0 ================= -->
+    <model name="ground">
+      <static>true</static>
+      <link name="link">
+        <pose>0 0 -0.5 0 0 0</pose>
+        <collision name="c"><geometry><box><size>40 40 1.0</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>40 40 1.0</size></box></geometry>
+          <material><ambient>0.35 0.30 0.25 1</ambient><diffuse>0.45 0.38 0.30 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ===== RAMP: 20 deg ascending, toe at x = 1.5 (z=0), 3 m of run =====
+         run 3 m -> rise 3*tan(20) = 1.092 m ; slab length 3/cos(20) = 3.193 m
+         centre x = 1.5 + 3/2 = 3.0 ; centre z (0.1-thick slab, top through toe)
+           = 1.5*tan(20) - 0.05/cos(20) = 0.546 - 0.053 = 0.493
+         pitch = -0.349066 rad  (negative pitch lifts the +x end) -->
+    <model name="ramp20">
+      <static>true</static>
+      <link name="link">
+        <pose>3.0 0 0.493 0 -0.349066 0</pose>
+        <collision name="c"><geometry><box><size>3.193 8 0.10</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>3.193 8 0.10</size></box></geometry>
+          <material><ambient>0.20 0.45 0.25 1</ambient><diffuse>0.25 0.60 0.30 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ============ STEP BOXES on flat ground, ~2 m from the rover ============ -->
+    <model name="box015">
+      <static>true</static>
+      <link name="link">
+        <pose>0.0 -2.0 0.075 0 0 0</pose>
+        <collision name="c"><geometry><box><size>1.0 1.0 0.15</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>1.0 1.0 0.15</size></box></geometry>
+          <material><ambient>0.55 0.45 0.15 1</ambient><diffuse>0.75 0.60 0.20 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="box030">
+      <static>true</static>
+      <link name="link">
+        <pose>0.0 2.0 0.15 0 0 0</pose>
+        <collision name="c"><geometry><box><size>1.0 1.0 0.30</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>1.0 1.0 0.30</size></box></geometry>
+          <material><ambient>0.55 0.30 0.15 1</ambient><diffuse>0.75 0.40 0.20 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="box045">
+      <static>true</static>
+      <link name="link">
+        <pose>-2.7 0.0 0.225 0 0 0</pose>
+        <collision name="c"><geometry><box><size>1.0 1.0 0.45</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>1.0 1.0 0.45</size></box></geometry>
+          <material><ambient>0.50 0.15 0.15 1</ambient><diffuse>0.70 0.20 0.20 1</diffuse></material></visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>
