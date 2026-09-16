@@ -26,8 +26,11 @@
 #include "kiss_icp/pipeline/KissICP.hpp"
 
 // ROS 2
+#include <deque>
+#include <mutex>
 #include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/header.hpp>
 #include <std_srvs/srv/empty.hpp>
@@ -52,6 +55,9 @@ private:
     /// Register new frame
     void RegisterFrame(const sensor_msgs::msg::PointCloud2::ConstSharedPtr &msg);
 
+    /// IMU callback for relative rotation prior
+    void ImuCallback(const sensor_msgs::msg::Imu::ConstSharedPtr &msg);
+
     /// Stream the estimated pose to ROS
     void PublishOdometry(const Sophus::SE3d &kiss_pose, const std_msgs::msg::Header &header);
 
@@ -73,6 +79,16 @@ private:
 
     /// Data subscribers.
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
+    rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr wheel_sub_;
+
+    /// Motion priors
+    bool use_imu_{true};
+    bool use_wheel_odom_{false};
+    double wheel_vx_{0.0};
+    std::deque<sensor_msgs::msg::Imu> imu_queue_;
+    std::mutex imu_mutex_;
+    rclcpp::Time last_cloud_stamp_{0, 0, RCL_ROS_TIME};
 
     /// Data publishers.
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_publisher_;
@@ -93,6 +109,15 @@ private:
     /// Covariance diagonal
     double position_covariance_;
     double orientation_covariance_;
+
+    /// Short-Window (Rolling Window) ICP to prevent map poisoning during spins
+    int sliding_window_size_{20};
+    struct WindowFrame {
+        Sophus::SE3d pose;
+        std::vector<Eigen::Vector3d> points;
+    };
+    std::deque<WindowFrame> sliding_window_;
+    double last_dt_{0.1};
 };
 
 }  // namespace kiss_icp_ros

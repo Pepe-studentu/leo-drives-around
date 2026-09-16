@@ -30,6 +30,9 @@ setup(
         'console_scripts': [
             'ground_truth_node = rover_localization.ground_truth_node:main',
             'benchmark_loc = rover_localization.benchmark_loc:main',
+            'satellite_oracle_node = rover_localization.satellite_oracle_node:main',
+            'global_3d_corrector = rover_localization.global_3d_corrector:main',
+            'rover_kinematic_ekf = rover_localization.rover_kinematic_ekf:main',
         ],
     },
 )

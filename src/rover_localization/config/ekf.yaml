@@ -21,16 +21,27 @@ ekf_filter_node_odom:
 
     publish_tf: true
 
-    # Wheel odometry: velocities only (vx, vy, vz, vyaw)
+    # Wheel odometry: disabled so wheel slippage cannot corrupt 3D odometry
     odom0: /odom
     odom0_config: [false, false, false,
                    false, false, false,
-                   true,  true,  true,
-                   false, false, true,
+                   false, false, false,
+                   false, false, false,
                    false, false, false]
     odom0_queue_size: 10
     odom0_differential: false
     odom0_relative: false
+
+    # LiDAR odometry: KISS-ICP 3D position (x, y, z)
+    odom1: /kiss/odometry
+    odom1_config: [true,  true,  true,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+    odom1_queue_size: 10
+    odom1_differential: false
+    odom1_relative: false
 
     # IMU: 3D orientation (roll, pitch, yaw) and angular velocities (wx, wy, wz)
     imu0: /imu/data
@@ -56,7 +67,7 @@ ekf_filter_node_map:
     use_sim_time: true
     frequency: 20.0
     sensor_timeout: 0.1
-    two_d_mode: false
+    two_d_mode: true
     transform_time_offset: 0.0
     transform_timeout: 0.0
     print_diagnostics: true
@@ -69,18 +80,18 @@ ekf_filter_node_map:
 
     publish_tf: true
 
-    # Continuous 3D odometry from local EKF: fuses height (z), tilt (roll, pitch), and velocities
+    # Local odometry: velocities from KISS-ICP in local EKF
     odom0: /odometry/local
-    odom0_config: [false, false, true,
-                   true,  true,  false,
-                   true,  true,  true,
+    odom0_config: [false, false, false,
+                   false, false, false,
+                   true,  false, false,
                    false, false, true,
                    false, false, false]
     odom0_queue_size: 10
     odom0_differential: false
     odom0_relative: false
 
-    # GPS: converted to Cartesian position (x, y ONLY - never z) in map frame by navsat_transform
+    # GPS: absolute (x, y) map-frame positioning
     odom1: /odometry/gps
     odom1_config: [true,  true,  false,
                    false, false, false,
@@ -91,12 +102,12 @@ ekf_filter_node_map:
     odom1_differential: false
     odom1_relative: false
 
-    # IMU: orientation and angular velocities
+    # IMU: planar orientation (yaw) and angular velocity (wz)
     imu0: /imu/data
     imu0_config: [false, false, false,
-                  true,  true,  true,
+                  false, false, true,
                   false, false, false,
-                  true,  true,  true,
+                  false, false, true,
                   false, false, false]
     imu0_differential: false
     imu0_relative: false
