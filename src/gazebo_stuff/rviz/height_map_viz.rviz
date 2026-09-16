@@ -5,11 +5,13 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /TF1
-        - /Raw Cloud1
-        - /Height Map Cloud1
+        - /RobotModel1
+        - /Marsyard Ground Truth1
+        - /Traversability Costmap1
+        - /Mission Waypoints1
+        - /Global Plan1
       Splitter Ratio: 0.5
-    Tree Height: 700
+    Tree Height: 766
   - Class: rviz_common/Views
     Expanded:
       - /Current View1
@@ -18,7 +20,7 @@ Panels:
 Visualization Manager:
   Class: ""
   Displays:
-    - Alpha: 0.5
+    - Alpha: 0.3
       Cell Size: 1
       Class: rviz_default_plugins/Grid
       Color: 160; 160; 164
@@ -37,27 +39,224 @@ Visualization Manager:
       Reference Frame: map
       Value: true
     - Class: rviz_default_plugins/TF
-      Enabled: true
+      Enabled: false
+      Filter (blacklist): ""
+      Filter (whitelist): ""
       Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        base_footprint:
+          Value: true
+        ground_truth_base:
+          Value: true
+        map:
+          Value: true
+        odom:
+          Value: true
+      Marker Scale: 0.5
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
-      Value: true
+      Tree:
+        map:
+          ground_truth_base:
+            {}
+          odom:
+            base_footprint:
+              {}
+      Update Interval: 0
+      Value: false
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
+      Collision Enabled: false
+      Description File: ""
+      Description Source: Topic
       Description Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
         Value: /robot_description
       Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+      Mass Properties:
+        Inertia: false
+        Mass: false
       Name: RobotModel
       TF Prefix: ""
+      Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: Marsyard Ground Truth
+      Namespaces:
+        marsyard_ground_truth: true
+      Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /marsyard/ground_truth_mesh
+      Value: true
+    - Alpha: 0.75
+      Class: rviz_default_plugins/Map
+      Color Scheme: costmap
+      Draw Behind: false
+      Enabled: true
+      Name: Traversability Costmap
+      Topic:
+        Depth: 1
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /traversability/costmap
+      Use Timestamp: false
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Mission Waypoints
+      Namespaces:
+        mission_route: true
+        waypoint_discs: true
+        waypoint_headings: true
+        waypoint_labels: true
+      Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /mission/waypoints
+      Value: true
+    - Alpha: 1.0
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 0; 255; 100
+      Enabled: true
+      Head Diameter: 0.3
+      Head Length: 0.2
+      Length: 0.3
+      Line Style: Lines
+      Line Width: 0.08
+      Name: Global Plan
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0.1
+      Pose Style: None
+      Radius: 0.03
+      Shaft Diameter: 0.1
+      Shaft Length: 0.1
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /plan
+      Value: true
+    - Alpha: 1.0
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 0; 200; 255
+      Enabled: true
+      Head Diameter: 0.3
+      Head Length: 0.2
+      Length: 0.3
+      Line Style: Lines
+      Line Width: 0.05
+      Name: Local Plan
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0.12
+      Pose Style: None
+      Radius: 0.03
+      Shaft Diameter: 0.1
+      Shaft Length: 0.1
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /local_plan
+      Value: true
+    - Alpha: 0.8
+      Class: rviz_default_plugins/Map
+      Color Scheme: costmap
+      Draw Behind: false
+      Enabled: true
+      Name: Local Costmap (Controller View)
+      Topic:
+        Depth: 1
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /local_costmap/costmap
+      Use Timestamp: false
+      Value: true
+    - Alpha: 1.0
+      Class: rviz_default_plugins/Polygon
+      Color: 255; 255; 0
+      Enabled: true
+      Name: Robot Footprint
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /local_costmap/published_footprint
+      Value: true
+    - Alpha: 1.0
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 255; 0; 128
+      Enabled: true
+      Head Diameter: 0.2
+      Head Length: 0.1
+      Length: 0.2
+      Line Style: Lines
+      Line Width: 0.08
+      Name: Controller Collision Arc
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0.15
+      Pose Style: None
+      Radius: 0.03
+      Shaft Diameter: 0.1
+      Shaft Length: 0.1
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /lookahead_collision_arc
+      Value: true
+    - Alpha: 1.0
+      Class: rviz_default_plugins/PointStamped
+      Color: 255; 255; 0
+      Enabled: true
+      History Length: 1
+      Name: Controller Lookahead Target
+      Radius: 0.15
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /lookahead_point
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 2
-        Min Value: -2
+        Max Value: 0.8
+        Min Value: -0.02
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -65,13 +264,13 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: AxisColor
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 2
       Min Color: 0; 0; 0
       Min Intensity: -2
-      Name: Raw Cloud
+      Name: Raw Cloud (Debug)
       Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 3
@@ -80,18 +279,50 @@ Visualization Manager:
       Topic:
         Depth: 5
         Durability Policy: Volatile
-        Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Best Effort
         Value: /height_map/raw_cloud
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 1.0
-        Min Value: -0.05
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz_default_plugins/PointCloud2
+      Color: 0; 255; 0
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: Fast-LIO Effective Anchors (Debug)
+      Position Transformer: XYZ
+      Selectable: true
+      Size (Pixels): 5
+      Size (m): 0.08
+      Style: Points
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /cloud_effected
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: false
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 1.95
+        Min Value: -0.09
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -99,28 +330,55 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: AxisColor
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 1.0
+      Max Intensity: 1
       Min Color: 0; 0; 0
       Min Intensity: -0.05
-      Name: Height Map Cloud
+      Name: Height Map Cloud (Debug)
       Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 6
-      Size (m): 0.1
+      Size (m): 0.10
       Style: Flat Squares
       Topic:
         Depth: 1
         Durability Policy: Volatile
-        Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /height_map/cloud
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
+    - Alpha: 0.7
+      Class: rviz_default_plugins/Map
+      Color Scheme: costmap
+      Draw Behind: false
+      Enabled: false
+      Name: Slope Layer (Debug)
+      Topic:
+        Depth: 1
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /traversability/slope_costmap
+      Use Timestamp: false
+      Value: false
+    - Alpha: 0.7
+      Class: rviz_default_plugins/Map
+      Color Scheme: costmap
+      Draw Behind: false
+      Enabled: false
+      Name: Step Layer (Debug)
+      Topic:
+        Depth: 1
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /traversability/step_costmap
+      Use Timestamp: false
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -133,11 +391,14 @@ Visualization Manager:
     - Class: rviz_default_plugins/MoveCamera
     - Class: rviz_default_plugins/Select
     - Class: rviz_default_plugins/FocusCamera
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
   Value: true
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 15
+      Distance: 25.0
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -147,14 +408,24 @@ Visualization Manager:
         X: 0
         Y: 0
         Z: 0
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05
+      Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.7
+      Pitch: 0.95
       Target Frame: map
-      Yaw: 0.8
-  Saved: ~
+      Value: Orbit (rviz_default_plugins)
+      Yaw: 2.35
+    Saved: ~
 Window Geometry:
-  Height: 900
-  Width: 1400
-  X: 60
-  Y: 60
+  Displays:
+    collapsed: false
+  Height: 1656
+  Hide Left Dock: false
+  Hide Right Dock: false
+  Views:
+    collapsed: false
+  Width: 2880
+  X: 0
+  Y: 0

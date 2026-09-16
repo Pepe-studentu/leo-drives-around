@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# clean_sweep: Bulletproof termination of all Gazebo, ROS 2, RViz,
+# bridge, and Python simulation nodes inside Docker and on host.
+# ==============================================================================
+
+CONTAINER_NAME="compassionate_pike"
+
+echo "[clean_sweep] Purging all simulation, ROS 2 nodes, Gazebo, and RViz..."
+
+# Check if running INSIDE Docker container
+if [ -f /.dockerenv ]; then
+    echo "[clean_sweep] Running inside Docker container. Purging processes directly..."
+    ps -eo pid,cmd | grep -E "ros|gz|ruby|bridge|kiss|rviz|robot_state|static_transform|launch|python.*ros|marsyard|home/ws|rover_" | grep -v grep | grep -v "clean_sweep" | awk '{print $1}' | xargs -r kill -9 2>/dev/null || true
+    source /opt/ros/jazzy/setup.bash 2>/dev/null || true
+    ros2 daemon stop 2>/dev/null || true
+    rm -rf /tmp/gz* /tmp/launch_params_* /tmp/runtime-root 2>/dev/null || true
+    echo "[clean_sweep] Container processes purged."
+    exit 0
+fi
+
+# Otherwise, running on HOST:
+if command -v docker &>/dev/null && docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+    echo "[clean_sweep] Purging processes inside Docker container '$CONTAINER_NAME'..."
+    docker exec -u 0 "$CONTAINER_NAME" bash -c '
+        ps -eo pid,cmd | grep -E "ros|gz|ruby|bridge|kiss|rviz|robot_state|static_transform|launch|python.*ros|marsyard|home/ws|rover_" | grep -v grep | awk "{print \$1}" | xargs -r kill -9 2>/dev/null || true
+        source /opt/ros/jazzy/setup.bash 2>/dev/null || true
+        ros2 daemon stop 2>/dev/null || true
+        rm -rf /tmp/gz* /tmp/launch_params_* /tmp/runtime-root 2>/dev/null || true
+    ' 2>/dev/null || true
+fi
+
+# Host-side cleanup for any native RViz or ROS instances
+ps -eo pid,cmd | grep -E "rviz|ros2|gz|ruby" | grep -v grep | awk '{print $1}' | xargs -r kill -9 2>/dev/null || true
+
+echo "[clean_sweep] All simulation, RViz, and ROS 2 processes terminated. 100% clean."

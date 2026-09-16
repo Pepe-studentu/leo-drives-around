@@ -12,9 +12,9 @@ this first, wait for it to settle, then bring up localization, then the rest:
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command
+from launch.substitutions import Command, LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -26,10 +26,21 @@ def generate_launch_description():
     world_path = os.path.join(pkg_gazebo_stuff, 'worlds', 'calibration.sdf')
     urdf_file = os.path.join(pkg_gazebo_stuff, 'urdf', 'rover_with_lidar.urdf.xacro')
 
+    headless_arg = DeclareLaunchArgument(
+        'headless',
+        default_value='true',
+        description='Whether to run Gazebo in headless mode (-s server only, no GUI window)'
+    )
+    headless = LaunchConfiguration('headless')
+
+    gz_args = PythonExpression([
+        f"'-r -s {world_path}' if '", headless, "' == 'true' else '-r {world_path}'"
+    ])
+
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')),
-        launch_arguments={'gz_args': f'-r {world_path}'}.items(),
+        launch_arguments={'gz_args': gz_args}.items(),
     )
 
     robot_description = ParameterValue(Command(['xacro ', urdf_file]), value_type=str)
@@ -67,5 +78,5 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        gazebo, robot_state_publisher, spawn_rover, bridge,
+        headless_arg, gazebo, robot_state_publisher, spawn_rover, bridge,
     ])

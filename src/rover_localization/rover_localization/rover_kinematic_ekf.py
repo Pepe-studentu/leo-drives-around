@@ -64,6 +64,15 @@ def quat_to_euler(q):
     return roll, pitch, yaw
 
 
+def quat_to_R(x: float, y: float, z: float, w: float) -> np.ndarray:
+    """Convert quaternion (x, y, z, w) to 3x3 rotation matrix."""
+    return np.array([
+        [1.0 - 2.0 * (y * y + z * z), 2.0 * (x * y - z * w), 2.0 * (x * z + y * w)],
+        [2.0 * (x * y + z * w), 1.0 - 2.0 * (x * x + z * z), 2.0 * (y * z - x * w)],
+        [2.0 * (x * z - y * w), 2.0 * (y * z + x * w), 1.0 - 2.0 * (x * x + y * y)]
+    ], dtype=np.float32)
+
+
 def euler_to_quat(roll: float, pitch: float, yaw: float):
     """Convert (roll, pitch, yaw) to (x, y, z, w)."""
     cy = math.cos(yaw * 0.5)
@@ -115,7 +124,7 @@ class RoverKinematicEKF(Node):
         self.declare_parameter('k_spin_boost', 1.4)    # Lateral slip multiplier when skid-steering
         self.declare_parameter('cmd_timeout', 0.0)      # Timeout to zero commanded velocity (s, 0.0 = disabled)
 
-        # Observability & Option A Parameters
+        # Observability & Adaptive Fusion Parameters
         self.declare_parameter('gamma_observability', 15.0)  # Eigenvalue sensitivity
         self.declare_parameter('r_base_xy', 0.04)           # Base covariance on X/Y (0.20 m std)
         self.declare_parameter('r_base_z', 0.0005)          # Base covariance on Z (~0.02 m std on dense ground)
@@ -207,6 +216,8 @@ class RoverKinematicEKF(Node):
         # Publishers
         self.odom_pub = self.create_publisher(Odometry, '/odometry/local', 10)
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
         # Timer for prediction and publishing
         dt = 1.0 / max(self.publish_rate, 10.0)
@@ -244,6 +255,23 @@ class RoverKinematicEKF(Node):
 
         if xyz.shape[0] < 50:
             return
+
+        # Transform points into base_frame so terrain normals are evaluated in rover body frame
+        if msg.header.frame_id != self.base_frame:
+            try:
+                tf = self.tf_buffer.lookup_transform(
+                    self.base_frame,
+                    msg.header.frame_id,
+                    rclpy.time.Time(),
+                    rclpy.duration.Duration(seconds=0.05),
+                )
+                trans = tf.transform.translation
+                rot = tf.transform.rotation
+                R = quat_to_R(rot.x, rot.y, rot.z, rot.w)
+                t = np.array([trans.x, trans.y, trans.z], dtype=np.float32)
+                xyz = (R @ xyz.T).T + t
+            except Exception:
+                pass
 
         x, y, z = xyz[:, 0], xyz[:, 1], xyz[:, 2]
         r2 = x * x + y * y
@@ -288,7 +316,7 @@ class RoverKinematicEKF(Node):
         self.current_lambda = (max(lam_x, 0.01), max(lam_y, 0.01), max(lam_z, 1.0))
 
     def lidar_cb(self, msg: Odometry):
-        """Adaptive Subspace LiDAR measurement update (Option A: Inverse-Lambda)."""
+        """Adaptive Subspace LiDAR measurement update (Inverse-Lambda formulation)."""
         if not self.enable_lidar_update:
             return
 

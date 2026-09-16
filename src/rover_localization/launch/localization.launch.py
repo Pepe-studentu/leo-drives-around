@@ -1,24 +1,3 @@
-"""Rover localization stack (REP-105 compliant Dual-EKF architecture).
-
-Components:
-1. Local EKF (ekf_filter_node_odom):
-   Fuses wheel odometry velocities + IMU orientation/angular velocities.
-   Publishes continuous, jump-free transform: odom -> base_footprint.
-   Used by local costmaps and velocity controllers.
-
-2. Global EKF (ekf_filter_node_map):
-   Fuses wheel odometry velocities + IMU + absolute GPS fixes (/odometry/gps).
-   Publishes global transform: map -> odom.
-   Used by global path planners and waypoint followers.
-
-3. Navsat Transform (navsat_transform):
-   Transforms raw GPS fixes (/gps/fix) + IMU heading + Gazebo datum into
-   Cartesian map-frame positions (/odometry/gps).
-
-4. Ground Truth Node (ground_truth_node):
-   Bridges true simulation pose (/gazebo/dynamic_pose) to /ground_truth/pose
-   and broadcasts map -> ground_truth_base for real-time benchmarking and RViz.
-"""
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -30,16 +9,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     pkg_rover_localization = get_package_share_directory('rover_localization')
-    pkg_fast_lio = get_package_share_directory('fast_lio')
     ekf_config_path = os.path.join(pkg_rover_localization, 'config', 'ekf.yaml')
-    fast_lio_config_path = os.path.join(pkg_fast_lio, 'config', 'rover.yaml')
-
-    use_fast_lio_arg = DeclareLaunchArgument(
-        'use_fast_lio',
-        default_value='false',
-        description='Whether to use Fast-LIO2 (true) or KISS-ICP (false) for 3D LiDAR odometry'
-    )
-    use_fast_lio = LaunchConfiguration('use_fast_lio')
 
     use_oracle_arg = DeclareLaunchArgument(
         'use_oracle',
@@ -50,8 +20,8 @@ def generate_launch_description():
 
     initial_z_arg = DeclareLaunchArgument(
         'initial_z',
-        default_value='1.594',
-        description='Initial ground elevation datum for map->odom Z offset (1.594 for Marsyard, 0.0 for calibration world)'
+        default_value='1.135',
+        description='Initial ground elevation datum for map->odom Z offset (1.135 for Base Station)'
     )
     initial_z = LaunchConfiguration('initial_z')
 
@@ -79,7 +49,7 @@ def generate_launch_description():
     use_kinematic_ekf_arg = DeclareLaunchArgument(
         'use_kinematic_ekf',
         default_value='true',
-        description='Whether to run Rover Kinematic Terramechanics EKF for odom->base_footprint'
+        description='Whether to run Rover Kinematic EKF for odom->base_footprint'
     )
     use_kinematic_ekf = LaunchConfiguration('use_kinematic_ekf')
 
@@ -93,14 +63,14 @@ def generate_launch_description():
     gamma_observability_arg = DeclareLaunchArgument(
         'gamma_observability',
         default_value='5.0',
-        description='Gain knob for eigenvalue sensitivity in Option A adaptive LiDAR fusion'
+        description='Eigenvalue sensitivity gain for adaptive LiDAR fusion'
     )
     gamma_observability = LaunchConfiguration('gamma_observability')
 
     cmd_timeout_arg = DeclareLaunchArgument(
         'cmd_timeout',
         default_value='0.0',
-        description='Timeout to zero commanded velocity (0.0 to disable timeout for keyboard teleop)'
+        description='Timeout to zero commanded velocity (0.0 to disable)'
     )
     cmd_timeout = LaunchConfiguration('cmd_timeout')
 
@@ -108,23 +78,7 @@ def generate_launch_description():
         "'false' if '", use_kinematic_ekf, "' == 'true' else '", publish_kiss_tf, "'"
     ])
 
-    # Fast-LIO 2 LiDAR-Inertial Odometry Node
-    fast_lio_node = Node(
-        package='fast_lio',
-        executable='fastlio_mapping',
-        name='laser_mapping',
-        output='screen',
-        parameters=[
-            fast_lio_config_path,
-            {'use_sim_time': True}
-        ],
-        remappings=[
-            ('/Odometry', '/kiss/odometry'),
-        ],
-        condition=IfCondition(use_fast_lio),
-    )
-
-    # 1. Static map->odom fallback (used when oracle is disabled)
+    # Static map->odom fallback (used when oracle is disabled)
     static_map_to_odom = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -134,7 +88,7 @@ def generate_launch_description():
         condition=UnlessCondition(use_oracle),
     )
 
-    # 5. Satellite Oracle Node (0.5 Hz ground truth fix on Mars)
+    # Satellite Oracle Node (Ground truth periodic reference fix)
     satellite_oracle = Node(
         package='rover_localization',
         executable='satellite_oracle_node',
@@ -152,7 +106,7 @@ def generate_launch_description():
         condition=IfCondition(use_oracle),
     )
 
-    # 6. Global 3D Corrector (fuses 0.5 Hz oracle with EKF odom, broadcast map -> odom)
+    # Global 3D Corrector (Fuses periodic oracle with local odometry, broadcasts map -> odom)
     global_3d_corrector = Node(
         package='rover_localization',
         executable='global_3d_corrector',
@@ -173,7 +127,7 @@ def generate_launch_description():
         condition=IfCondition(use_oracle),
     )
 
-    # 4. KISS-ICP LiDAR Odometry Node
+    # KISS-ICP 3D LiDAR Odometry Node
     kiss_icp_node = Node(
         package='kiss_icp',
         executable='kiss_icp_node',
@@ -204,10 +158,9 @@ def generate_launch_description():
             'registration.max_num_threads': 4,
             'sliding_window_size': 20,
         }],
-        condition=UnlessCondition(use_fast_lio),
     )
 
-    # 5. Rover Kinematic Terramechanics EKF Node
+    # Rover Kinematic Terramechanics EKF Node
     rover_kinematic_ekf_node = Node(
         package='rover_localization',
         executable='rover_kinematic_ekf',
@@ -232,7 +185,7 @@ def generate_launch_description():
         condition=IfCondition(use_kinematic_ekf),
     )
 
-    # 6. Ground truth bridge for benchmarking & visualization
+    # Ground truth bridge for benchmarking and evaluation
     ground_truth_node = Node(
         package='rover_localization',
         executable='ground_truth_node',
@@ -245,7 +198,6 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        use_fast_lio_arg,
         use_oracle_arg,
         initial_z_arg,
         use_ground_truth_odom_arg,
@@ -255,7 +207,6 @@ def generate_launch_description():
         enable_lidar_update_arg,
         gamma_observability_arg,
         cmd_timeout_arg,
-        fast_lio_node,
         kiss_icp_node,
         rover_kinematic_ekf_node,
         static_map_to_odom,
@@ -263,4 +214,3 @@ def generate_launch_description():
         global_3d_corrector,
         ground_truth_node,
     ])
-

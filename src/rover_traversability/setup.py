@@ -31,6 +31,7 @@ setup(
             'calib_checker = rover_traversability.calib_checker:main',
             'nav_e2e_checker = rover_traversability.nav_e2e_checker:main',
             'height_map_viz_node = rover_traversability.height_map_viz_node:main',
+            'height_map_evaluator = rover_traversability.height_map_evaluator:main',
         ],
     },
 )

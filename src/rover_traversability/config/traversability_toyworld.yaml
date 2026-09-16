@@ -9,10 +9,10 @@ traversability_node:
 
     # --- grid geometry (must match the global_costmap in nav2_params.yaml) ---
     resolution: 0.15
-    map_size_x: 60.0
-    map_size_y: 60.0
-    origin_x: -30.0
-    origin_y: -30.0
+    map_size_x: 50.0
+    map_size_y: 50.0
+    origin_x: -25.0
+    origin_y: -25.0
 
     # --- cloud preprocessing / update rate ---
     stride: 1

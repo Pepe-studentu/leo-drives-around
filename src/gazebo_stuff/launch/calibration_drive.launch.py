@@ -28,10 +28,16 @@ def generate_launch_description():
         parameters=[{'use_sim_time': True}],
     )
 
+    height_map_eval = Node(
+        package='rover_traversability', executable='height_map_evaluator',
+        name='height_map_evaluator', output='screen',
+        parameters=[{'use_sim_time': True}],
+    )
+
     rviz = Node(
         package='rviz2', executable='rviz2', name='rviz2', output='screen',
         arguments=['-d', rviz_config_path],
         parameters=[{'use_sim_time': True}],
     )
 
-    return LaunchDescription([height_map_viz, rviz])
+    return LaunchDescription([height_map_viz, height_map_eval, rviz])

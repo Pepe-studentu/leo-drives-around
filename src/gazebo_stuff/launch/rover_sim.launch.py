@@ -3,7 +3,7 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription                                                                                                                                       
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, SetEnvironmentVariable                                                                         
 from launch.launch_description_sources import PythonLaunchDescriptionSource                                                                                                
-from launch.substitutions import Command, LaunchConfiguration                                                                                                              
+from launch.substitutions import Command, LaunchConfiguration, PythonExpression                                                                                                              
 from launch_ros.actions import Node                                                                                                                                        
 from launch_ros.parameter_descriptions import ParameterValue                                                                                                               
                                                                                                                                                                             
@@ -24,12 +24,23 @@ def generate_launch_description():
         value=f'{models_path}:{os.environ.get("GZ_SIM_RESOURCE_PATH", "")}'                                                                                                
     )                                                                                                                                                                      
                                                                                                                                                                             
+    headless_arg = DeclareLaunchArgument(
+        'headless',
+        default_value='true',
+        description='Whether to run Gazebo in headless mode (-s server only, no GUI window)'
+    )
+    headless = LaunchConfiguration('headless')
+
+    gz_args = PythonExpression([
+        f"'-r -s {world_path}' if '", headless, "' == 'true' else '-r {world_path}'"
+    ])
+
     # 2. Start Gazebo Sim with Marsyard                                                                                                                                    
     gazebo = IncludeLaunchDescription(                                                                                                                                     
         PythonLaunchDescriptionSource(                                                                                                                                     
             os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')                                                                                                     
         ),                                                                                                                                                                 
-        launch_arguments={'gz_args': f'-r {world_path}'}.items(),                                                                                                          
+        launch_arguments={'gz_args': gz_args}.items(),                                                                                                          
     )                                                                                                                                                                      
                                                                                                                                                                             
     # 3. Process the 3D LiDAR Rover URDF                                                                                                                                   
@@ -58,9 +69,10 @@ def generate_launch_description():
         arguments=[                                                                                                                                                        
             '-name', 'leo_rover',                                                                                                                                          
             '-topic', 'robot_description',                                                                                                                                 
-            '-x', '0.0',                                                                                                                                                   
-            '-y', '0.0',                                                                                                                                                   
-            '-z', '1.65'      # Spawns onto the Mars surface                                                                                                               
+            '-x', '-10.09',                                                                                                                                                   
+            '-y', '9.33',                                                                                                                                                   
+            '-z', '1.65',      # Spawns onto the flat Mars surface at Base Station
+            '-Y', '0.0'
         ]                                                                                                                                                                  
     )                                                                                                                                                                      
                                                                                                                                                                             
@@ -88,6 +100,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        headless_arg,
         set_gz_resource_path,
         gazebo,
         robot_state_publisher,

@@ -106,5 +106,46 @@
       </link>
     </model>
 
+    <!-- ============ ENCLOSING VERTICAL WALLS (Room) ============ -->
+    <model name="wall_west">
+      <static>true</static>
+      <link name="link">
+        <pose>-4.5 0.0 1.0 0 0 0</pose>
+        <collision name="c"><geometry><box><size>0.2 12.0 2.0</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.2 12.0 2.0</size></box></geometry>
+          <material><ambient>0.6 0.6 0.65 1</ambient><diffuse>0.7 0.7 0.75 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="wall_east">
+      <static>true</static>
+      <link name="link">
+        <pose>6.0 0.0 1.0 0 0 0</pose>
+        <collision name="c"><geometry><box><size>0.2 12.0 2.0</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.2 12.0 2.0</size></box></geometry>
+          <material><ambient>0.6 0.6 0.65 1</ambient><diffuse>0.7 0.7 0.75 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="wall_north">
+      <static>true</static>
+      <link name="link">
+        <pose>0.75 6.0 1.0 0 0 0</pose>
+        <collision name="c"><geometry><box><size>10.7 0.2 2.0</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>10.7 0.2 2.0</size></box></geometry>
+          <material><ambient>0.6 0.6 0.65 1</ambient><diffuse>0.7 0.7 0.75 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="wall_south">
+      <static>true</static>
+      <link name="link">
+        <pose>0.75 -6.0 1.0 0 0 0</pose>
+        <collision name="c"><geometry><box><size>10.7 0.2 2.0</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>10.7 0.2 2.0</size></box></geometry>
+          <material><ambient>0.6 0.6 0.65 1</ambient><diffuse>0.7 0.7 0.75 1</diffuse></material></visual>
+      </link>
+    </model>
+
   </world>
 </sdf>
