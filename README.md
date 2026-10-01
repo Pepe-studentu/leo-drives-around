@@ -17,15 +17,12 @@ The stack integrates 3D LiDAR odometry, kinematic sensor fusion, traversability 
 ├── .devcontainer/         # VS Code Dev Container configuration (ROS 2 Jazzy Desktop)
 ├── src/
 │   ├── gazebo_stuff/             # Mars Yard world, rover model configuration, and simulation launch
-│   ├── leo_common-ros2/          # Leo Rover descriptions, meshes, and common definitions
-│   ├── leo_simulator-ros2/       # Leo Rover Gazebo plugins and simulation bindings
+│   ├── leo_common-ros2/          # (git submodule) Leo Rover descriptions, meshes, common definitions
+│   ├── leo_simulator-ros2/       # (git submodule) Leo Rover Gazebo plugins and simulation bindings
 │   ├── rover_localization/       # Sensor fusion (EKF, KISS-ICP, GPS datum alignment)
 │   ├── rover_traversability/     # Point cloud processing and terrain traversability cost generation
 │   ├── rover_navigation/         # Nav2 configuration, mission runner, and bringup launch scripts
-│   ├── kiss_icp/                 # LiDAR odometry registration
-│   ├── linefit_ground_segmentation/ # Ground point segmentation library
-│   ├── elevation_mapping_cpu/    # CPU-based elevation mapping
-│   └── kindr / kindr_ros/        # Kinematics and coordinate transformation libraries
+│   └── kiss_icp/                 # LiDAR odometry (vendored KISS-ICP wrapper, locally modified)
 ```
 
 ## Prerequisites
@@ -40,7 +37,15 @@ The stack integrates 3D LiDAR odometry, kinematic sensor fusion, traversability 
 
 ## Build Instructions
 
-Inside the workspace directory (or within the Dev Container):
+Clone with submodules (`leo_common-ros2` and `leo_simulator-ros2` are git submodules):
+
+```bash
+git clone --recurse-submodules https://github.com/Pepe-studentu/leo-drives-around
+# or, if already cloned:
+git submodule update --init
+```
+
+Then, inside the workspace directory (or within the Dev Container):
 
 ```bash
 # Source ROS 2 Jazzy

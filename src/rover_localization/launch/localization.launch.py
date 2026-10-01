@@ -1,5 +1,3 @@
-import os
-from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition, UnlessCondition
@@ -8,9 +6,6 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    pkg_rover_localization = get_package_share_directory('rover_localization')
-    ekf_config_path = os.path.join(pkg_rover_localization, 'config', 'ekf.yaml')
-
     use_oracle_arg = DeclareLaunchArgument(
         'use_oracle',
         default_value='true',
@@ -38,13 +33,6 @@ def generate_launch_description():
         description='Whether KISS-ICP publishes odom->base_footprint transform directly'
     )
     publish_kiss_tf = LaunchConfiguration('publish_kiss_tf')
-
-    use_wheel_odom_arg = DeclareLaunchArgument(
-        'use_wheel_odom',
-        default_value='false',
-        description='Whether KISS-ICP fuses wheel odometry translation prior'
-    )
-    use_wheel_odom = LaunchConfiguration('use_wheel_odom')
 
     use_kinematic_ekf_arg = DeclareLaunchArgument(
         'use_kinematic_ekf',
@@ -136,7 +124,6 @@ def generate_launch_description():
         remappings=[
             ('pointcloud_topic', '/points'),
             ('imu_topic', '/imu/data'),
-            ('wheel_odom_topic', '/odom'),
         ],
         parameters=[{
             'use_sim_time': True,
@@ -147,7 +134,6 @@ def generate_launch_description():
             'position_covariance': 0.01,
             'orientation_covariance': 0.01,
             'use_imu': True,
-            'use_wheel_odom': use_wheel_odom,
             'data.deskew': False,
             'data.max_range': 15.0,
             'data.min_range': 0.35,
@@ -202,7 +188,6 @@ def generate_launch_description():
         initial_z_arg,
         use_ground_truth_odom_arg,
         publish_kiss_tf_arg,
-        use_wheel_odom_arg,
         use_kinematic_ekf_arg,
         enable_lidar_update_arg,
         gamma_observability_arg,

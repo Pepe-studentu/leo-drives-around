@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# clean_sweep: kill leftover Gazebo / ROS 2 / RViz processes. Run inside the container.
+
+SELF=$$
+PATTERN='gz sim|gz-sim|ruby|ros2|_ros2_daemon|parameter_bridge|kiss_icp_node|rviz2|robot_state_publisher|static_transform_publisher|component_container|/home/ws/install|nav2_|controller_server|planner_server|bt_navigator|mission_runner'
+
+echo "[clean_sweep] Stopping simulation, ROS 2 nodes, Gazebo and RViz..."
+
+# Collect exact PIDs, excluding this script and its parent shell.
+pids=$(pgrep -f "$PATTERN" | grep -v -x -e "$SELF" -e "$PPID")
+
+if [ -n "$pids" ]; then
+    kill -TERM $pids 2>/dev/null
+    sleep 2
+    survivors=$(ps -o pid= -p $(echo $pids | tr ' ' ',') 2>/dev/null)
+    [ -n "$survivors" ] && kill -KILL $survivors 2>/dev/null
+fi
+
+source /opt/ros/jazzy/setup.bash 2>/dev/null
+ros2 daemon stop 2>/dev/null
+rm -rf /tmp/gz* /tmp/launch_params_* 2>/dev/null
+
+echo "[clean_sweep] Done."

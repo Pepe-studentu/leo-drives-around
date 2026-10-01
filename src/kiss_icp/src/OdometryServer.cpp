@@ -89,13 +89,6 @@ OdometryServer::OdometryServer(const rclcpp::NodeOptions &options)
     imu_sub_ = create_subscription<sensor_msgs::msg::Imu>(
         "imu_topic", rclcpp::SensorDataQoS(),
         std::bind(&OdometryServer::ImuCallback, this, std::placeholders::_1));
-    if (use_wheel_odom_) {
-        wheel_sub_ = create_subscription<nav_msgs::msg::Odometry>(
-            "wheel_odom_topic", rclcpp::SensorDataQoS(),
-            [this](const nav_msgs::msg::Odometry::ConstSharedPtr msg) {
-                wheel_vx_ = msg->twist.twist.linear.x;
-            });
-    }
 
     // Initialize publishers
     rclcpp::QoS qos((rclcpp::SystemDefaultsQoS().keep_last(1).durability_volatile()));
@@ -138,8 +131,6 @@ void OdometryServer::initializeParameters(kiss_icp::pipeline::KISSConfig &config
     RCLCPP_INFO(this->get_logger(), "\tOrientation covariance: %.2f", orientation_covariance_);
     use_imu_ = declare_parameter<bool>("use_imu", true);
     RCLCPP_INFO(this->get_logger(), "\tUse IMU prior: %d", use_imu_);
-    use_wheel_odom_ = declare_parameter<bool>("use_wheel_odom", false);
-    RCLCPP_INFO(this->get_logger(), "\tUse Wheel Odom prior: %d", use_wheel_odom_);
     sliding_window_size_ = declare_parameter<int>("sliding_window_size", 20);
     RCLCPP_INFO(this->get_logger(), "\tSliding window size: %d frames", sliding_window_size_);
 
@@ -192,21 +183,10 @@ void OdometryServer::RegisterFrame(const sensor_msgs::msg::PointCloud2::ConstSha
     const rclcpp::Time cloud_stamp(msg->header.stamp);
 
     if (last_cloud_stamp_.nanoseconds() > 0) {
-        double dt = (cloud_stamp - last_cloud_stamp_).seconds();
-        if (dt < 0.0 || dt > 1.0) dt = 0.1;
-        last_dt_ = dt;
-
         Sophus::SE3d cloud2base = LookupTransform(base_frame_, cloud_frame_id, tf2_buffer_);
         Eigen::Matrix3d R_c2b = cloud2base.rotationMatrix();
 
-        // 1. Translation prior in LiDAR frame
-        Eigen::Vector3d delta_t_lidar = kiss_icp_->delta().translation();
-        if (use_wheel_odom_) {
-            Eigen::Vector3d delta_t_base(wheel_vx_ * dt, 0.0, 0.0);
-            delta_t_lidar = R_c2b.transpose() * delta_t_base;
-        }
-
-        // 2. IMU rotation prior in LiDAR frame
+        // IMU rotation prior in LiDAR frame (translation prior is KISS-ICP's own constant-velocity model)
         Eigen::Matrix3d delta_R_lidar = kiss_icp_->delta().rotationMatrix();
         if (use_imu_) {
             std::lock_guard<std::mutex> lock(imu_mutex_);
@@ -234,8 +214,8 @@ void OdometryServer::RegisterFrame(const sensor_msgs::msg::PointCloud2::ConstSha
             }
         }
 
-        // 3. Inject full SE(3) motion prior into KISS-ICP
-        kiss_icp_->delta() = Sophus::SE3d(Sophus::SO3d(delta_R_lidar), delta_t_lidar);
+        // Inject motion prior into KISS-ICP: IMU rotation, translation from its own delta
+        kiss_icp_->delta() = Sophus::SE3d(Sophus::SO3d(delta_R_lidar), kiss_icp_->delta().translation());
     }
     last_cloud_stamp_ = cloud_stamp;
 
@@ -311,20 +291,6 @@ void OdometryServer::PublishOdometry(const Sophus::SE3d &kiss_pose,
     odom_msg.pose.covariance[21] = orientation_covariance_;
     odom_msg.pose.covariance[28] = orientation_covariance_;
     odom_msg.pose.covariance[35] = orientation_covariance_;
-
-    // Populate twist from frame-to-frame delta
-    if (last_dt_ > 0.001 && last_dt_ < 1.0) {
-        const Sophus::SE3d delta = kiss_icp_->delta();
-        Sophus::SE3d delta_base = delta;
-        if (!egocentric_estimation) {
-            const Sophus::SE3d cloud2base = LookupTransform(base_frame_, cloud_frame_id, tf2_buffer_);
-            delta_base = cloud2base * delta * cloud2base.inverse();
-        }
-        odom_msg.twist.twist.linear.x = delta_base.translation().x() / last_dt_;
-        odom_msg.twist.twist.linear.y = delta_base.translation().y() / last_dt_;
-        odom_msg.twist.twist.linear.z = delta_base.translation().z() / last_dt_;
-        odom_msg.twist.twist.angular.z = delta_base.so3().log().z() / last_dt_;
-    }
 
     odom_publisher_->publish(std::move(odom_msg));
 }

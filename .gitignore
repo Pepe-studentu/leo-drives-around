@@ -9,18 +9,10 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
-# Scratch & debug files
-probe*.py
-test_benchmark*.py
-test_inspect.py
-test_dual_ekf.yaml
-churn.py
-navsat_transform.cpp
-localization_benchmark_report.json
-
-# Editor & bags
+# Editor, devcontainer & bags
 *.swp
 *~
 .vscode/
+.devcontainer/.container.Xauthority
 *.mcap
 *.db3

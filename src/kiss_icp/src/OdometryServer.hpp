@@ -80,12 +80,9 @@ private:
     /// Data subscribers.
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
-    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr wheel_sub_;
 
     /// Motion priors
     bool use_imu_{true};
-    bool use_wheel_odom_{false};
-    double wheel_vx_{0.0};
     std::deque<sensor_msgs::msg::Imu> imu_queue_;
     std::mutex imu_mutex_;
     rclcpp::Time last_cloud_stamp_{0, 0, RCL_ROS_TIME};
@@ -117,7 +114,6 @@ private:
         std::vector<Eigen::Vector3d> points;
     };
     std::deque<WindowFrame> sliding_window_;
-    double last_dt_{0.1};
 };
 
 }  // namespace kiss_icp_ros

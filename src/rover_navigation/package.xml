@@ -18,7 +18,6 @@
   <exec_depend>nav2_waypoint_follower</exec_depend>
   <exec_depend>nav2_lifecycle_manager</exec_depend>
   <exec_depend>nav2_simple_commander</exec_depend>
-  <exec_depend>linefit_ground_segmentation_ros</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
