@@ -5,7 +5,7 @@
   <version>0.0.1</version>
   <description>Elevation and traversability mapping: turns the lidar point cloud into a
   graded terrain-cost grid that Nav2 consumes as a costmap layer.</description>
-  <maintainer email="Daisa.Io.Petru@student.utcluj.ro">petru</maintainer>
+  <maintainer email="155471233+Pepe-studentu@users.noreply.github.com">Petru</maintainer>
   <license>TODO: License declaration</license>
 
   <exec_depend>rclpy</exec_depend>

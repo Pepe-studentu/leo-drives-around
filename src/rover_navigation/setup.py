@@ -16,8 +16,8 @@ setup(
     ],                                                                                                                                                                     
     install_requires=['setuptools'],                                                                                                                                       
     zip_safe=True,         
-    maintainer='petru',
-    maintainer_email='Daisa.Io.Petru@student.utcluj.ro',
+    maintainer='Petru',
+    maintainer_email='155471233+Pepe-studentu@users.noreply.github.com',
     description='Autonomous rover navigation',
     license='TODO: License declaration',
     extras_require={

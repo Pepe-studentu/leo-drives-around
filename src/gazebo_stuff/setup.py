@@ -20,7 +20,7 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='Petru',
-    maintainer_email='Daisa.Io.Petru@student.utcluj.ro',
+    maintainer_email='155471233+Pepe-studentu@users.noreply.github.com',
     description='plug and play gazebo simulation for a rover.',
     license='Apache-2.0',
     extras_require={

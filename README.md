@@ -66,11 +66,20 @@ source install/setup.bash
 
 ### 1. Full Autonomous Stack Bringup
 
-Launch Gazebo, the rover model, localization, traversability mapping, and Nav2:
+Launch Gazebo, the rover model, localization, traversability mapping, Nav2 and RViz:
 
 ```bash
 ros2 launch rover_navigation marsyard_bringup.launch.py
 ```
+
+Arguments:
+
+| Argument | Default | Effect |
+|---|---|---|
+| `rviz` | `true` | Open RViz (`height_map_viz.rviz`) showing the robot, Mars Yard ground-truth mesh, traversability and local costmaps, global/local plans, controller debug and mission waypoints |
+| `headless` | `true` | `true` = Gazebo server only, no Gazebo window. Use `headless:=false` to see Gazebo's GUI |
+
+Example: `ros2 launch rover_navigation marsyard_bringup.launch.py headless:=false rviz:=false`
 
 ### 2. Run the Autonomous Mission
 
@@ -79,6 +88,17 @@ Once Nav2 has transitioned to the active lifecycle state and localization has in
 ```bash
 ros2 run rover_navigation mission_runner
 ```
+
+### Seeing GUI windows (RViz / Gazebo) in the Dev Container
+
+GUI apps need X11 access from inside the container. The Dev Container config mounts the host's
+`~/.Xauthority` to `.devcontainer/.container.Xauthority` and sets `DISPLAY`/`XAUTHORITY`. That file is
+created by Docker, is git-ignored, and must not be deleted while the container exists; if windows
+fail to open (RViz aborts with "Available platform plugins are: ..."), restart or rebuild the container.
+
+### Cleaning up between runs
+
+Inside the container, `./clean_sweep` stops leftover Gazebo, ROS 2 and RViz processes.
 
 ## Launch Modules
 
@@ -95,6 +115,10 @@ Individual components can also be launched independently:
 - **Traversability node:**
   ```bash
   ros2 launch rover_traversability traversability.launch.py
+  ```
+- **Visualization only (RViz + ground-truth mesh + height-map debug node):**
+  ```bash
+  ros2 launch gazebo_stuff marsyard_drive.launch.py
   ```
 - **Navigation (Nav2):**
   ```bash

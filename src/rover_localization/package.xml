@@ -4,7 +4,7 @@
   <name>rover_localization</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="Daisa.Io.Petru@student.utcluj.ro">root</maintainer>
+  <maintainer email="155471233+Pepe-studentu@users.noreply.github.com">Petru</maintainer>
   <license>TODO: License declaration</license>
 
   <exec_depend>robot_localization</exec_depend>
