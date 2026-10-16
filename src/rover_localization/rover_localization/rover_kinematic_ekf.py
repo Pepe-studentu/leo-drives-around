@@ -3,7 +3,8 @@
 
 Fuses:
 1. Rover Kinematic Terramechanics Predictor (50 Hz):
-   - /cmd_vel (nominal drive and turn commands)
+   - /odom twist.linear.x (measured wheel speed; falls back to /cmd_vel until the first message)
+   - /cmd_vel (only to classify the motion mode -- spin / turn / forward -- and for the command timeout)
    - /imu/data (attitude tilt: roll, pitch; and gyro yaw rate: omega_z)
    - Incline-induced slip rules (longitudinal uphill/downhill slip and lateral side-slip)
    - Non-Holonomic Constraints (v_z^body ≈ 0 surface contact; v_x^body = 0 during pure spins)

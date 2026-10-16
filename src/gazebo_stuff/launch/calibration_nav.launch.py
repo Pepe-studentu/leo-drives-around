@@ -81,12 +81,9 @@ def generate_launch_description():
         output='screen',
     )
 
-    traversability_params = os.path.join(
-        pkg_trav, 'config', 'traversability_toyworld.yaml')
     traversability = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_trav, 'launch', 'traversability.launch.py')),
-        launch_arguments={'params_file': traversability_params}.items(),
     )
 
     navigation = IncludeLaunchDescription(

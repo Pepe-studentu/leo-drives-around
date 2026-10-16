@@ -1,50 +1,41 @@
+# All values are doubles: write 50.0, not 50 (ROS rejects an int for a double parameter).
+# Defaults for the map/cost fields live in rover_traversability/height_map.py (HeightMapConfig);
+# they are repeated here so this file is the one place to look and tune.
 traversability_node:
   ros__parameters:
-    use_sim_time: true      # Gazebo publishes /clock; without this, get_clock().now()
-                            # is wall time while msg stamps are sim time -> huge "age",
-                            # and every TF lookup at msg.stamp fails.
+    use_sim_time: true
 
-    # --- I/O ---
+    # --- I/O (strings) ---
     input_cloud_topic: /points
-    output_costmap_topic: /traversability/costmap
+    oracle_topic: /satellite/oracle_fix
     map_frame: map
+    rover_frame: base_footprint
 
-    # --- grid geometry (must match the global_costmap in nav2_params.yaml) ---
-    resolution: 0.15        # metres per cell (point density won't support finer;
-                            # a rover-sized ~0.4 m ravine still spans ~3 cells)
-    map_size_x: 60.0        # metres
-    map_size_y: 60.0        # metres
-    origin_x: -30.0         # world x of the grid's bottom-left corner
-    origin_y: -30.0         # world y of the grid's bottom-left corner
+    # --- grid geometry. nav2 global_costmap is static-layer-fed, so it adopts this grid. ---
+    resolution: 0.10
+    map_size_x: 50.0
+    map_size_y: 50.0
+    origin_x: -25.0
+    origin_y: -25.0
 
-    # --- cloud preprocessing / update rate ---
-    stride: 1              # keep every Nth point (raise if CPU-bound)
-    max_range: 20.0        # drop points farther than this from the sensor (m)
-    update_period: 0.25   # seconds between grid updates (on_timer)
+    # --- scan filtering / rate ---
+    min_range: 0.35
+    max_range: 15.0
+    update_period: 0.50
+    publish_debug_costmaps: true    # also publish /traversability/{slope,step}_costmap
 
-    # --- temporal fusion (2d) ---
-    fusion: max          # 'max' = running max per cell (converges at once, never lags);
-                         # 'ema' = exponential blend (was churning on sparse revisits)
-    ema_alpha: 0.2       # only used when fusion == 'ema'
-    outlier_gate: 0.0    # metres; drop a single obs this far ABOVE the estimate (0=off)
-    outlier_min_hits: 10 # a cell must have this many hits before the gate applies
+    # --- Bayesian height map ---
+    sigma_sensor: 0.02        # lidar depth noise std dev (m)
+    sigma_angular: 0.01       # lever-arm uncertainty per metre of range (rad)
+    k_drift: 0.005            # variance growth (m^2/s) since the last global fix
+    min_variance: 0.0001      # variance floor (m^2)
+    mahalanobis_gate: 3.5     # outlier rejection (std devs)
+    spawn_bootstrap_radius: 1.5   # known-ground disc under the rover at start (m)
+    lidar_height: 0.23            # lidar height above ground at spawn (m)
 
-    # --- derived layers (2e) ---
-    min_hits: 3          # a cell needs this many observations before slope/step/rough trust it
-    smooth_iters: 0      # 3x3 box-blur passes before the SLOPE calc only (0=off; step/rough always raw)
-    publish_debug_layers: false  # true -> also publish height/slope/step/rough grids (for tuning)
-    slope_method: planefit  # 'planefit' = hole-tolerant 3x3 least-squares plane; 'gradient' = np.gradient
-    slope_min_pts: 4    # a cell needs this many filled 3x3 neighbours or slope stays unknown
-
-    # --- cost combination (2f); all tuned for real in Phase 5 ---
-    slope_free_deg: 10.0    # <= this: no slope penalty
-    slope_lethal_deg: 25.0  # >= this: slope alone = cost 100 (rover's real climb limit)
-    step_lethal_m: 0.15     # any neighbour jump above this: cost 100
-    rough_free: 0.03        # <= this: no roughness penalty
-    rough_lethal: 0.12      # >= this: roughness alone = cost 100
-
-    # --- placeholders for Phase 2 (temporal fusion + cost thresholds) ---
-    # ema_alpha: 0.3
-    # slope_free_deg: 10.0
-    # slope_lethal_deg: 25.0
-    # step_lethal_m: 0.15
+    # --- slope costmap ---
+    slope_free_deg: 30.0      # <= this: cost 0
+    slope_warn_deg: 35.0      # up to this: flat cost slope_warn_cost
+    slope_lethal_deg: 45.0    # warn..lethal ramps to 100; above this: lethal
+    slope_warn_cost: 10.0
+    rover_footprint_radius: 0.45  # cells this close to the rover are forced free

@@ -15,6 +15,8 @@ instead of starting everything simultaneously.
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
 
@@ -22,10 +24,10 @@ def generate_launch_description():
     pkg_gazebo_stuff = get_package_share_directory('gazebo_stuff')
     rviz_config_path = os.path.join(pkg_gazebo_stuff, 'rviz', 'height_map_viz.rviz')
 
-    height_map_viz = Node(
-        package='rover_traversability', executable='height_map_viz_node',
-        name='height_map_viz_node', output='screen',
-        parameters=[{'use_sim_time': True}],
+    height_map_viz = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('rover_traversability'),
+                         'launch', 'traversability.launch.py')),
     )
 
     height_map_eval = Node(
