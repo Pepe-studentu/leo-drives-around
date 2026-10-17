@@ -84,6 +84,7 @@ class TraversabilityNode(Node):
         self.bootstrapped = False
         self.last_oracle_stamp = None
         self.last_stamp = None
+        self.prev_scan_time = None
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -165,6 +166,9 @@ class TraversabilityNode(Node):
         else:
             dt_oracle = 1.0
 
+        if self.prev_scan_time is not None:
+            self.map.age(min(max((stamp - self.prev_scan_time).nanoseconds * 1e-9, 0.0), 1.0))
+        self.prev_scan_time = stamp
         self.map.integrate(pts_map, ranges, dt_oracle)
 
     # ------------------------------------------------------------------ #

@@ -18,6 +18,12 @@ further than `mahalanobis_gate` sigmas from the estimate (and more than 0.20 m
 away) is rejected; each rejection inflates the cell's variance so a real change
 can eventually be absorbed.
 
+Aging: between scans every stored variance grows by k_age * dt (capped at
+max_variance), as in the predict step of a Kalman filter. A cell that has not
+been re-observed for a while was written under older pose estimates, so it is
+trusted less; the first scan after a global fix then overwrites it with a high
+gain, while a cell seen every scan keeps a small variance and barely moves.
+
 Costmap
 -------
 Slope only. Gaps smaller than the rover are closed morphologically, heights are
@@ -51,6 +57,8 @@ class HeightMapConfig:
     k_drift: float = 0.005          # variance growth (m^2/s) since the last global fix
     min_variance: float = 0.0001    # variance floor (m^2), keeps the filter responsive
     mahalanobis_gate: float = 3.5   # outlier rejection threshold (std devs)
+    k_age: float = 0.002            # stored-variance growth (m^2/s): old cells become easier to overwrite
+    max_variance: float = 0.05      # cap on aging (m^2), so a never-revisited cell stays finite
 
     slope_free_deg: float = 30.0
     slope_warn_deg: float = 35.0
@@ -98,6 +106,12 @@ class HeightMap:
         return ground_z
 
     # ------------------------------------------------------------------ #
+    def age(self, dt):
+        """Grow the variance of every known cell by k_age * dt (call once per scan, before integrate)."""
+        known = self.var < np.inf
+        v = self.var[known]
+        self.var[known] = np.minimum(v + self.cfg.k_age * dt, np.maximum(v, self.cfg.max_variance))
+
     def integrate(self, pts_map, ranges, dt_oracle):
         """Fuse one scan (N x 3 points already in the map frame) into the grid."""
         c = self.cfg

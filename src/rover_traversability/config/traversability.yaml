@@ -30,6 +30,8 @@ traversability_node:
     k_drift: 0.005            # variance growth (m^2/s) since the last global fix
     min_variance: 0.0001      # variance floor (m^2)
     mahalanobis_gate: 3.5     # outlier rejection (std devs)
+    k_age: 0.002              # stored-variance growth (m^2/s); untuned first guess
+    max_variance: 0.05        # cap on aging (m^2)
     spawn_bootstrap_radius: 1.5   # known-ground disc under the rover at start (m)
     lidar_height: 0.23            # lidar height above ground at spawn (m)
 
